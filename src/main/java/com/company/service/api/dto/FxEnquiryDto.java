@@ -8,8 +8,11 @@ public class FxEnquiryDto {
     private LocalDate reportDate;
     private Integer recordNo;
     private String fxCategory;
+    private String fxCategoryDescription;
     private String fxCode;
+    private String fxCodeDescription;
     private String fxType;
+    private String fxTypeDescription;
     private BigDecimal fxAmount;
     private LocalDate fxDate;
 
@@ -40,10 +43,16 @@ public class FxEnquiryDto {
     public void setRecordNo(Integer recordNo) { this.recordNo = recordNo; }
     public String getFxCategory() { return fxCategory; }
     public void setFxCategory(String fxCategory) { this.fxCategory = fxCategory; }
+    public String getFxCategoryDescription() { return fxCategoryDescription; }
+    public void setFxCategoryDescription(String fxCategoryDescription) { this.fxCategoryDescription = fxCategoryDescription; }
     public String getFxCode() { return fxCode; }
     public void setFxCode(String fxCode) { this.fxCode = fxCode; }
+    public String getFxCodeDescription() { return fxCodeDescription; }
+    public void setFxCodeDescription(String fxCodeDescription) { this.fxCodeDescription = fxCodeDescription; }
     public String getFxType() { return fxType; }
     public void setFxType(String fxType) { this.fxType = fxType; }
+    public String getFxTypeDescription() { return fxTypeDescription; }
+    public void setFxTypeDescription(String fxTypeDescription) { this.fxTypeDescription = fxTypeDescription; }
     public BigDecimal getFxAmount() { return fxAmount; }
     public void setFxAmount(BigDecimal fxAmount) { this.fxAmount = fxAmount; }
     public LocalDate getFxDate() { return fxDate; }
