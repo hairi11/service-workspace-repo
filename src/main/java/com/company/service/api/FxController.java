@@ -1,6 +1,9 @@
 package com.company.service.api;
 
+import java.util.Arrays;
 import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,8 +37,10 @@ public class FxController {
     public PageResponse<FxEnquiryDto> enquiry(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "20") int size,
-        @RequestParam(required = false) List<String> sort
+        HttpServletRequest request
     ) {
+        String[] sortValues = request.getParameterValues("sort");
+        List<String> sort = sortValues == null ? null : Arrays.asList(sortValues);
         return service.findEnquiryRecords(page, size, sort);
     }
 
