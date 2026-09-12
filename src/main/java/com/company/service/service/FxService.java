@@ -6,6 +6,8 @@ import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -15,6 +17,7 @@ import com.company.service.api.dto.FxMasterDto;
 import com.company.service.api.dto.FxSaveRequest;
 import com.company.service.api.dto.FxSaveResponse;
 import com.company.service.api.dto.FxTrxDto;
+import com.company.service.api.dto.PageResponse;
 import com.company.service.entity.FxMaster;
 import com.company.service.entity.FxTrx;
 import com.company.service.repository.FxMasterRepository;
@@ -25,6 +28,7 @@ public class FxService {
 
     private static final String STATUS_DRAFT = "DRAFT";
     private static final String STATUS_ACTIVE = "ACTIVE";
+    private static final int MAX_PAGE_SIZE = 100;
 
     private final FxMasterRepository masterRepository;
     private final FxTrxRepository trxRepository;
@@ -34,24 +38,20 @@ public class FxService {
         this.trxRepository = trxRepository;
     }
 
-    public List<FxEnquiryDto> findEnquiryRecords() {
-        List<FxEnquiryDto> records = new ArrayList<>();
-
-        for (FxMaster master : masterRepository.findAll()) {
-            for (FxTrx trx : trxRepository.findByMasterIdOrderByRecordNoAsc(master.getId())) {
-                FxEnquiryDto dto = new FxEnquiryDto();
-                dto.setReportDate(master.getReportDate());
-                dto.setRecordNo(trx.getRecordNo());
-                dto.setFxCategory(trx.getFxCategory());
-                dto.setFxCode(trx.getFxCode());
-                dto.setFxType(trx.getFxType());
-                dto.setFxAmount(trx.getFxAmount());
-                dto.setFxDate(trx.getFxDate());
-                records.add(dto);
-            }
+    public PageResponse<FxEnquiryDto> findEnquiryRecords(int page, int size) {
+        if (page < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Page must be 0 or greater.");
         }
 
-        return records;
+        if (size < 1 || size > MAX_PAGE_SIZE) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Size must be between 1 and " + MAX_PAGE_SIZE + "."
+            );
+        }
+
+        Page<FxEnquiryDto> result = trxRepository.findEnquiry(PageRequest.of(page, size));
+        return new PageResponse<>(result);
     }
 
     public List<FxMasterDto> findAllMasters() {
