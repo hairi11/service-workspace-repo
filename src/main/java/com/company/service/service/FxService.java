@@ -30,6 +30,73 @@ public class FxService {
         this.trxRepository = trxRepository;
     }
 
+    public List<FxMaster> findAllMasters() {
+        return masterRepository.findAll();
+    }
+
+    public FxMaster findMasterById(Long id) {
+        return masterRepository.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "FX master not found: " + id
+            ));
+    }
+
+    public FxMaster createMaster(FxMaster input) {
+        FxMaster master = new FxMaster();
+        master.setStatus(input.getStatus());
+        return masterRepository.save(master);
+    }
+
+    public FxMaster updateMaster(Long id, FxMaster input) {
+        FxMaster master = findMasterById(id);
+        master.setStatus(input.getStatus());
+        return masterRepository.save(master);
+    }
+
+    @Transactional
+    public void deleteMaster(Long id) {
+        findMasterById(id);
+        trxRepository.deleteByMasterId(id);
+        masterRepository.deleteById(id);
+    }
+
+    public List<FxTrx> findTransactionsByMasterId(Long masterId) {
+        requireMaster(masterId);
+        return trxRepository.findByMasterIdOrderByRecordNoAsc(masterId);
+    }
+
+    public FxTrx findTransactionById(Long id) {
+        return trxRepository.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "FX transaction not found: " + id
+            ));
+    }
+
+    public FxTrx createTransaction(Long masterId, FxTrx input) {
+        requireMaster(masterId);
+
+        FxTrx trx = new FxTrx();
+        trx.setMasterId(masterId);
+        trx.setRecordNo(nextRecordNo(masterId));
+        copyEditableFields(input, trx);
+        trx.setStatus(input.getStatus());
+        return trxRepository.save(trx);
+    }
+
+    public FxTrx updateTransaction(Long id, FxTrx input) {
+        FxTrx trx = findTransactionById(id);
+        copyEditableFields(input, trx);
+        trx.setStatus(input.getStatus());
+        return trxRepository.save(trx);
+    }
+
+    public void deleteTransaction(Long id) {
+        findTransactionById(id);
+        trxRepository.deleteById(id);
+    }
+
     @Transactional
     public FxSaveResponse saveDraft(FxSaveRequest request) {
         return save(request, STATUS_DRAFT);
@@ -51,21 +118,14 @@ public class FxService {
         if (inputMaster.getId() == null) {
             master = new FxMaster();
         } else {
-            master = masterRepository.findById(inputMaster.getId())
-                .orElseThrow(() -> new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "FX master not found: " + inputMaster.getId()
-                ));
+            master = findMasterById(inputMaster.getId());
         }
 
         master.setStatus(status);
         master = masterRepository.save(master);
 
         List<FxTrx> savedTransactions = new ArrayList<>();
-        int nextRecordNo = trxRepository.findTopByMasterIdOrderByRecordNoDesc(master.getId())
-            .map(FxTrx::getRecordNo)
-            .map(value -> value + 1)
-            .orElse(1);
+        int nextRecordNo = nextRecordNo(master.getId());
 
         List<FxTrx> transactions = request.getTransactions();
         if (transactions == null) {
@@ -80,11 +140,7 @@ public class FxService {
                 trx.setMasterId(master.getId());
                 trx.setRecordNo(nextRecordNo++);
             } else {
-                trx = trxRepository.findById(input.getId())
-                    .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "FX transaction not found: " + input.getId()
-                    ));
+                trx = findTransactionById(input.getId());
 
                 if (!master.getId().equals(trx.getMasterId())) {
                     throw new ResponseStatusException(
@@ -100,6 +156,19 @@ public class FxService {
         }
 
         return new FxSaveResponse(master, savedTransactions);
+    }
+
+    private int nextRecordNo(Long masterId) {
+        return trxRepository.findTopByMasterIdOrderByRecordNoDesc(masterId)
+            .map(FxTrx::getRecordNo)
+            .map(value -> value + 1)
+            .orElse(1);
+    }
+
+    private void requireMaster(Long masterId) {
+        if (!masterRepository.existsById(masterId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "FX master not found: " + masterId);
+        }
     }
 
     private void copyEditableFields(FxTrx source, FxTrx target) {
