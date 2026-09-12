@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.company.service.api.dto.FxEnquiryDto;
 import com.company.service.api.dto.FxMasterDto;
 import com.company.service.api.dto.FxSaveRequest;
 import com.company.service.api.dto.FxSaveResponse;
@@ -31,6 +32,26 @@ public class FxService {
     public FxService(FxMasterRepository masterRepository, FxTrxRepository trxRepository) {
         this.masterRepository = masterRepository;
         this.trxRepository = trxRepository;
+    }
+
+    public List<FxEnquiryDto> findEnquiryRecords() {
+        List<FxEnquiryDto> records = new ArrayList<>();
+
+        for (FxMaster master : masterRepository.findAll()) {
+            for (FxTrx trx : trxRepository.findByMasterIdOrderByRecordNoAsc(master.getId())) {
+                FxEnquiryDto dto = new FxEnquiryDto();
+                dto.setReportDate(master.getReportDate());
+                dto.setRecordNo(trx.getRecordNo());
+                dto.setFxCategory(trx.getFxCategory());
+                dto.setFxCode(trx.getFxCode());
+                dto.setFxType(trx.getFxType());
+                dto.setFxAmount(trx.getFxAmount());
+                dto.setFxDate(trx.getFxDate());
+                records.add(dto);
+            }
+        }
+
+        return records;
     }
 
     public List<FxMasterDto> findAllMasters() {
