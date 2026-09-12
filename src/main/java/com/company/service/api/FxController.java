@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.company.service.api.dto.FxEnquiryDto;
 import com.company.service.api.dto.FxMasterDto;
+import com.company.service.api.dto.FxReferenceDto;
 import com.company.service.api.dto.FxSaveRequest;
 import com.company.service.api.dto.FxSaveResponse;
 import com.company.service.api.dto.FxTrxDto;
@@ -42,6 +43,11 @@ public class FxController {
         String[] sortValues = request.getParameterValues("sort");
         List<String> sort = sortValues == null ? null : Arrays.asList(sortValues);
         return service.findEnquiryRecords(page, size, sort);
+    }
+
+    @GetMapping("/fx/references")
+    public List<FxReferenceDto> findReferences(@RequestParam String type) {
+        return service.findReferences(type);
     }
 
     @GetMapping("/fx-masters")
