@@ -2,12 +2,15 @@ package com.company.service.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -38,7 +41,12 @@ public class FxService {
         this.trxRepository = trxRepository;
     }
 
-    public PageResponse<FxEnquiryDto> findEnquiryRecords(int page, int size) {
+    public PageResponse<FxEnquiryDto> findEnquiryRecords(
+        int page,
+        int size,
+        String sortBy,
+        String sortDir
+    ) {
         if (page < 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Page must be 0 or greater.");
         }
@@ -50,8 +58,45 @@ public class FxService {
             );
         }
 
-        Page<FxEnquiryDto> result = trxRepository.findEnquiry(PageRequest.of(page, size));
+        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir)
+            ? Sort.Direction.ASC
+            : Sort.Direction.DESC;
+
+        String sortExpression = resolveEnquirySortExpression(sortBy);
+        PageRequest pageable = PageRequest.of(
+            page,
+            size,
+            JpaSort.unsafe(direction, sortExpression)
+        );
+
+        Page<FxEnquiryDto> result = trxRepository.findEnquiry(pageable);
         return new PageResponse<>(result);
+    }
+
+    private String resolveEnquirySortExpression(String sortBy) {
+        String value = sortBy == null ? "reportDate" : sortBy.trim();
+
+        switch (value) {
+            case "reportDate":
+                return "m.reportDate";
+            case "recordNo":
+                return "t.recordNo";
+            case "fxCategory":
+                return "t.fxCategory";
+            case "fxCode":
+                return "t.fxCode";
+            case "fxType":
+                return "t.fxType";
+            case "fxAmount":
+                return "t.fxAmount";
+            case "fxDate":
+                return "t.fxDate";
+            default:
+                throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Unsupported sort field: " + value.toLowerCase(Locale.ROOT)
+                );
+        }
     }
 
     public List<FxMasterDto> findAllMasters() {
