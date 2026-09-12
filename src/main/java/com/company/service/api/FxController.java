@@ -21,6 +21,11 @@ public class FxController {
 
     @PostMapping("/save")
     public FxSaveResponse save(@RequestBody FxSaveRequest request) {
-        return service.save(request);
+        return service.saveDraft(request);
+    }
+
+    @PostMapping("/submit")
+    public FxSaveResponse submit(@RequestBody FxSaveRequest request) {
+        return service.submit(request);
     }
 }
