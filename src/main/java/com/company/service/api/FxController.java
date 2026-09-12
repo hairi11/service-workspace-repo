@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,6 +17,7 @@ import com.company.service.api.dto.FxMasterDto;
 import com.company.service.api.dto.FxSaveRequest;
 import com.company.service.api.dto.FxSaveResponse;
 import com.company.service.api.dto.FxTrxDto;
+import com.company.service.api.dto.PageResponse;
 import com.company.service.service.FxService;
 
 @RestController
@@ -29,8 +31,11 @@ public class FxController {
     }
 
     @GetMapping("/fx/enquiry")
-    public List<FxEnquiryDto> enquiry() {
-        return service.findEnquiryRecords();
+    public PageResponse<FxEnquiryDto> enquiry(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "20") int size
+    ) {
+        return service.findEnquiryRecords(page, size);
     }
 
     @GetMapping("/fx-masters")
