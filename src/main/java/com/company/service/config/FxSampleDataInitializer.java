@@ -16,6 +16,10 @@ import com.company.service.repository.FxTrxRepository;
 @ConditionalOnProperty(name = "app.sample-data.enabled", havingValue = "true")
 public class FxSampleDataInitializer implements CommandLineRunner {
 
+    private static final String[] CATEGORIES = {"SPOT", "FORWARD", "SWAP"};
+    private static final String[] CURRENCIES = {"USD", "EUR", "SGD", "JPY", "GBP", "AUD", "CHF", "CAD"};
+    private static final String[] TYPES = {"BUY", "SELL"};
+
     private final FxMasterRepository masterRepository;
     private final FxTrxRepository trxRepository;
 
@@ -30,16 +34,35 @@ public class FxSampleDataInitializer implements CommandLineRunner {
             return;
         }
 
-        FxMaster master1 = createMaster("ACTIVE", LocalDate.of(2026, 9, 10));
-        FxMaster master2 = createMaster("ACTIVE", LocalDate.of(2026, 9, 11));
-        FxMaster master3 = createMaster("DRAFT", LocalDate.of(2026, 9, 12));
+        LocalDate startDate = LocalDate.of(2026, 8, 25);
 
-        createTrx(master1.getId(), 1, "ACTIVE", "SPOT", "USD", "BUY", "125000.00", "2026-09-10");
-        createTrx(master1.getId(), 2, "ACTIVE", "FORWARD", "EUR", "SELL", "85000.00", "2026-09-10");
-        createTrx(master2.getId(), 1, "ACTIVE", "SPOT", "SGD", "BUY", "64000.00", "2026-09-11");
-        createTrx(master2.getId(), 2, "ACTIVE", "SWAP", "JPY", "SELL", "1500000.00", "2026-09-11");
-        createTrx(master3.getId(), 1, "DRAFT", "FORWARD", "GBP", "BUY", "45000.00", "2026-09-12");
-        createTrx(master3.getId(), 2, "DRAFT", "SPOT", "AUD", "SELL", "72000.00", "2026-09-12");
+        for (int masterIndex = 0; masterIndex < 20; masterIndex++) {
+            LocalDate reportDate = startDate.plusDays(masterIndex);
+            String status = masterIndex % 5 == 4 ? "DRAFT" : "ACTIVE";
+            FxMaster master = createMaster(status, reportDate);
+
+            int transactionCount = 4 + (masterIndex % 3);
+            for (int recordNo = 1; recordNo <= transactionCount; recordNo++) {
+                int seed = masterIndex * 7 + recordNo;
+                String category = CATEGORIES[seed % CATEGORIES.length];
+                String currency = CURRENCIES[seed % CURRENCIES.length];
+                String type = TYPES[seed % TYPES.length];
+                BigDecimal amount = BigDecimal.valueOf(25000L + (seed * 13750L));
+                BigDecimal rate = BigDecimal.valueOf(0.75000000 + ((seed % 25) * 0.13750000));
+
+                createTrx(
+                    master.getId(),
+                    recordNo,
+                    status,
+                    category,
+                    currency,
+                    type,
+                    amount,
+                    rate,
+                    reportDate
+                );
+            }
+        }
     }
 
     private FxMaster createMaster(String status, LocalDate reportDate) {
@@ -56,21 +79,25 @@ public class FxSampleDataInitializer implements CommandLineRunner {
         String category,
         String code,
         String type,
-        String amount,
-        String fxDate
+        BigDecimal amount,
+        BigDecimal rate,
+        LocalDate fxDate
     ) {
         FxTrx trx = new FxTrx();
         trx.setMasterId(masterId);
         trx.setRecordNo(recordNo);
         trx.setStatus(status);
-        trx.setFxDate(LocalDate.parse(fxDate));
+        trx.setFxDate(fxDate);
         trx.setFxCategory(category);
         trx.setFxCode(code);
         trx.setFxType(type);
+        trx.setFxRefno("FX-" + masterId + "-" + recordNo);
+        trx.setFxParty("Counterparty " + ((recordNo % 5) + 1));
+        trx.setFxPrincipal("Principal " + ((recordNo % 3) + 1));
         trx.setFxCurrency(code);
-        trx.setFxAmount(new BigDecimal(amount));
-        trx.setFxRate(BigDecimal.ONE);
-        trx.setFxDescription("Sample FX transaction");
+        trx.setFxAmount(amount);
+        trx.setFxRate(rate);
+        trx.setFxDescription("Sample " + category + " " + type + " transaction");
         trxRepository.save(trx);
     }
 }
