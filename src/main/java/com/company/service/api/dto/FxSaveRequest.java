@@ -3,27 +3,24 @@ package com.company.service.api.dto;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.company.service.entity.FxMaster;
-import com.company.service.entity.FxTrx;
-
 public class FxSaveRequest {
 
-    private FxMaster master;
-    private List<FxTrx> transactions = new ArrayList<>();
+    private FxMasterDto master;
+    private List<FxTrxDto> transactions = new ArrayList<>();
 
-    public FxMaster getMaster() {
+    public FxMasterDto getMaster() {
         return master;
     }
 
-    public void setMaster(FxMaster master) {
+    public void setMaster(FxMasterDto master) {
         this.master = master;
     }
 
-    public List<FxTrx> getTransactions() {
+    public List<FxTrxDto> getTransactions() {
         return transactions;
     }
 
-    public void setTransactions(List<FxTrx> transactions) {
+    public void setTransactions(List<FxTrxDto> transactions) {
         this.transactions = transactions == null ? new ArrayList<>() : transactions;
     }
 }
