@@ -20,6 +20,7 @@
         <maven.compiler.release>17</maven.compiler.release>
         <maven.compiler.version>3.10.1</maven.compiler.version>
         <mysql.connector.version>8.0.33</mysql.connector.version>
+        <springdoc.version>1.7.0</springdoc.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -37,6 +38,11 @@
             <artifactId>mysql-connector-java</artifactId>
             <version>${mysql.connector.version}</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-ui</artifactId>
+            <version>${springdoc.version}</version>
         </dependency>
     </dependencies>
 
