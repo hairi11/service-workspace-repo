@@ -44,8 +44,7 @@ public class FxService {
     public PageResponse<FxEnquiryDto> findEnquiryRecords(
         int page,
         int size,
-        String sortBy,
-        String sortDir
+        List<String> sort
     ) {
         if (page < 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Page must be 0 or greater.");
@@ -58,19 +57,53 @@ public class FxService {
             );
         }
 
-        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir)
-            ? Sort.Direction.ASC
-            : Sort.Direction.DESC;
-
-        String sortExpression = resolveEnquirySortExpression(sortBy);
-        PageRequest pageable = PageRequest.of(
-            page,
-            size,
-            JpaSort.unsafe(direction, sortExpression)
-        );
+        Sort resolvedSort = resolveEnquirySort(sort);
+        PageRequest pageable = PageRequest.of(page, size, resolvedSort);
 
         Page<FxEnquiryDto> result = trxRepository.findEnquiry(pageable);
         return new PageResponse<>(result);
+    }
+
+    private Sort resolveEnquirySort(List<String> sortSpecs) {
+        if (sortSpecs == null || sortSpecs.isEmpty()) {
+            return JpaSort.unsafe(Sort.Direction.DESC, "m.reportDate")
+                .and(JpaSort.unsafe(Sort.Direction.ASC, "t.recordNo"));
+        }
+
+        Sort result = Sort.unsorted();
+
+        for (String spec : sortSpecs) {
+            if (spec == null || spec.trim().isEmpty()) {
+                continue;
+            }
+
+            String[] parts = spec.split(",", 2);
+            String sortBy = parts[0].trim();
+            String sortDir = parts.length > 1 ? parts[1].trim() : "asc";
+            Sort.Direction direction;
+
+            if ("asc".equalsIgnoreCase(sortDir)) {
+                direction = Sort.Direction.ASC;
+            } else if ("desc".equalsIgnoreCase(sortDir)) {
+                direction = Sort.Direction.DESC;
+            } else {
+                throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Unsupported sort direction: " + sortDir.toLowerCase(Locale.ROOT)
+                );
+            }
+
+            String sortExpression = resolveEnquirySortExpression(sortBy);
+            Sort next = JpaSort.unsafe(direction, sortExpression);
+            result = result.isUnsorted() ? next : result.and(next);
+        }
+
+        if (result.isUnsorted()) {
+            return JpaSort.unsafe(Sort.Direction.DESC, "m.reportDate")
+                .and(JpaSort.unsafe(Sort.Direction.ASC, "t.recordNo"));
+        }
+
+        return result;
     }
 
     private String resolveEnquirySortExpression(String sortBy) {
