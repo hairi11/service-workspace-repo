@@ -19,6 +19,9 @@ import com.company.service.repository.FxTrxRepository;
 @Service
 public class FxService {
 
+    private static final String STATUS_DRAFT = "DRAFT";
+    private static final String STATUS_ACTIVE = "ACTIVE";
+
     private final FxMasterRepository masterRepository;
     private final FxTrxRepository trxRepository;
 
@@ -28,7 +31,16 @@ public class FxService {
     }
 
     @Transactional
-    public FxSaveResponse save(FxSaveRequest request) {
+    public FxSaveResponse saveDraft(FxSaveRequest request) {
+        return save(request, STATUS_DRAFT);
+    }
+
+    @Transactional
+    public FxSaveResponse submit(FxSaveRequest request) {
+        return save(request, STATUS_ACTIVE);
+    }
+
+    private FxSaveResponse save(FxSaveRequest request, String status) {
         if (request == null || request.getMaster() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "FX master is required.");
         }
@@ -46,7 +58,7 @@ public class FxService {
                 ));
         }
 
-        master.setStatus(inputMaster.getStatus());
+        master.setStatus(status);
         master = masterRepository.save(master);
 
         List<FxTrx> savedTransactions = new ArrayList<>();
@@ -55,7 +67,12 @@ public class FxService {
             .map(value -> value + 1)
             .orElse(1);
 
-        for (FxTrx input : request.getTransactions()) {
+        List<FxTrx> transactions = request.getTransactions();
+        if (transactions == null) {
+            transactions = new ArrayList<>();
+        }
+
+        for (FxTrx input : transactions) {
             FxTrx trx;
 
             if (input.getId() == null) {
@@ -78,6 +95,7 @@ public class FxService {
             }
 
             copyEditableFields(input, trx);
+            trx.setStatus(status);
             savedTransactions.add(trxRepository.save(trx));
         }
 
@@ -85,7 +103,6 @@ public class FxService {
     }
 
     private void copyEditableFields(FxTrx source, FxTrx target) {
-        target.setStatus(source.getStatus());
         target.setFxDate(source.getFxDate());
         target.setFxCategory(source.getFxCategory());
         target.setFxCode(source.getFxCode());
