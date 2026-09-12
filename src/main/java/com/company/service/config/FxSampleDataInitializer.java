@@ -7,9 +7,12 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
+import com.company.service.common.FxReferenceType;
 import com.company.service.entity.FxMaster;
+import com.company.service.entity.FxReference;
 import com.company.service.entity.FxTrx;
 import com.company.service.repository.FxMasterRepository;
+import com.company.service.repository.FxReferenceRepository;
 import com.company.service.repository.FxTrxRepository;
 
 @Component
@@ -22,14 +25,22 @@ public class FxSampleDataInitializer implements CommandLineRunner {
 
     private final FxMasterRepository masterRepository;
     private final FxTrxRepository trxRepository;
+    private final FxReferenceRepository referenceRepository;
 
-    public FxSampleDataInitializer(FxMasterRepository masterRepository, FxTrxRepository trxRepository) {
+    public FxSampleDataInitializer(
+        FxMasterRepository masterRepository,
+        FxTrxRepository trxRepository,
+        FxReferenceRepository referenceRepository
+    ) {
         this.masterRepository = masterRepository;
         this.trxRepository = trxRepository;
+        this.referenceRepository = referenceRepository;
     }
 
     @Override
     public void run(String... args) {
+        seedReferences();
+
         if (masterRepository.count() > 0 || trxRepository.count() > 0) {
             return;
         }
@@ -63,6 +74,41 @@ public class FxSampleDataInitializer implements CommandLineRunner {
                 );
             }
         }
+    }
+
+    private void seedReferences() {
+        saveReference(FxReferenceType.CATEGORY, "SPOT", "Spot Transaction");
+        saveReference(FxReferenceType.CATEGORY, "FORWARD", "Forward Contract");
+        saveReference(FxReferenceType.CATEGORY, "SWAP", "Foreign Exchange Swap");
+
+        saveReference(FxReferenceType.TYPE, "BUY", "Buy");
+        saveReference(FxReferenceType.TYPE, "SELL", "Sell");
+
+        saveCurrencyReference("USD", "US Dollar");
+        saveCurrencyReference("EUR", "Euro");
+        saveCurrencyReference("SGD", "Singapore Dollar");
+        saveCurrencyReference("JPY", "Japanese Yen");
+        saveCurrencyReference("GBP", "Pound Sterling");
+        saveCurrencyReference("AUD", "Australian Dollar");
+        saveCurrencyReference("CHF", "Swiss Franc");
+        saveCurrencyReference("CAD", "Canadian Dollar");
+    }
+
+    private void saveCurrencyReference(String code, String description) {
+        saveReference(FxReferenceType.CODE, code, description);
+        saveReference(FxReferenceType.CURRENCY, code, description);
+    }
+
+    private void saveReference(String type, String code, String description) {
+        if (referenceRepository.existsByRefTypeAndCode(type, code)) {
+            return;
+        }
+
+        FxReference reference = new FxReference();
+        reference.setRefType(type);
+        reference.setCode(code);
+        reference.setDescription(description);
+        referenceRepository.save(reference);
     }
 
     private FxMaster createMaster(String status, LocalDate reportDate) {
