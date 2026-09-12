@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.company.service.api.dto.FxEnquiryDto;
 import com.company.service.api.dto.FxMasterDto;
 import com.company.service.api.dto.FxSaveRequest;
 import com.company.service.api.dto.FxSaveResponse;
@@ -25,6 +26,11 @@ public class FxController {
 
     public FxController(FxService service) {
         this.service = service;
+    }
+
+    @GetMapping("/fx/enquiry")
+    public List<FxEnquiryDto> enquiry() {
+        return service.findEnquiryRecords();
     }
 
     @GetMapping("/fx-masters")
