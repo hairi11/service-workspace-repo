@@ -34,12 +34,12 @@ public class FxSampleDataInitializer implements CommandLineRunner {
         FxMaster master2 = createMaster("ACTIVE", LocalDate.of(2026, 9, 11));
         FxMaster master3 = createMaster("DRAFT", LocalDate.of(2026, 9, 12));
 
-        createTrx(master1.getId(), 1, "SPOT", "USD", "BUY", "125000.00", "2026-09-10");
-        createTrx(master1.getId(), 2, "FORWARD", "EUR", "SELL", "85000.00", "2026-09-10");
-        createTrx(master2.getId(), 1, "SPOT", "SGD", "BUY", "64000.00", "2026-09-11");
-        createTrx(master2.getId(), 2, "SWAP", "JPY", "SELL", "1500000.00", "2026-09-11");
-        createTrx(master3.getId(), 1, "FORWARD", "GBP", "BUY", "45000.00", "2026-09-12");
-        createTrx(master3.getId(), 2, "SPOT", "AUD", "SELL", "72000.00", "2026-09-12");
+        createTrx(master1.getId(), 1, "ACTIVE", "SPOT", "USD", "BUY", "125000.00", "2026-09-10");
+        createTrx(master1.getId(), 2, "ACTIVE", "FORWARD", "EUR", "SELL", "85000.00", "2026-09-10");
+        createTrx(master2.getId(), 1, "ACTIVE", "SPOT", "SGD", "BUY", "64000.00", "2026-09-11");
+        createTrx(master2.getId(), 2, "ACTIVE", "SWAP", "JPY", "SELL", "1500000.00", "2026-09-11");
+        createTrx(master3.getId(), 1, "DRAFT", "FORWARD", "GBP", "BUY", "45000.00", "2026-09-12");
+        createTrx(master3.getId(), 2, "DRAFT", "SPOT", "AUD", "SELL", "72000.00", "2026-09-12");
     }
 
     private FxMaster createMaster(String status, LocalDate reportDate) {
@@ -52,6 +52,7 @@ public class FxSampleDataInitializer implements CommandLineRunner {
     private void createTrx(
         Long masterId,
         int recordNo,
+        String status,
         String category,
         String code,
         String type,
@@ -61,7 +62,7 @@ public class FxSampleDataInitializer implements CommandLineRunner {
         FxTrx trx = new FxTrx();
         trx.setMasterId(masterId);
         trx.setRecordNo(recordNo);
-        trx.setStatus("ACTIVE");
+        trx.setStatus(status);
         trx.setFxDate(LocalDate.parse(fxDate));
         trx.setFxCategory(category);
         trx.setFxCode(code);
