@@ -2,14 +2,12 @@ package com.company.service.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -20,6 +18,7 @@ import com.company.service.api.dto.FxSaveRequest;
 import com.company.service.api.dto.FxSaveResponse;
 import com.company.service.api.dto.FxTrxDto;
 import com.company.service.api.dto.PageResponse;
+import com.company.service.common.page.PageRequestBuilder;
 import com.company.service.entity.FxMaster;
 import com.company.service.entity.FxTrx;
 import com.company.service.repository.FxMasterRepository;
@@ -30,7 +29,6 @@ public class FxService {
 
     private static final String STATUS_DRAFT = "DRAFT";
     private static final String STATUS_ACTIVE = "ACTIVE";
-    private static final int MAX_PAGE_SIZE = 100;
 
     private final FxMasterRepository masterRepository;
     private final FxTrxRepository trxRepository;
@@ -40,91 +38,26 @@ public class FxService {
         this.trxRepository = trxRepository;
     }
 
-    public PageResponse<FxEnquiryDto> findEnquiryRecords(
-        int page,
-        int size,
-        List<String> sort
-    ) {
-        if (page < 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Page must be 0 or greater.");
-        }
-
-        if (size < 1 || size > MAX_PAGE_SIZE) {
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Size must be between 1 and " + MAX_PAGE_SIZE + "."
-            );
-        }
-
-        Sort resolvedSort = resolveEnquirySort(sort);
-        PageRequest pageable = PageRequest.of(page, size, resolvedSort);
+    public PageResponse<FxEnquiryDto> findEnquiryRecords(int page, int size, List<String> sort) {
+        Pageable pageable = PageRequestBuilder.builder()
+            .page(page)
+            .size(size)
+            .maxSize(100)
+            .sort(sort)
+            .allowedSorts(
+                "reportDate",
+                "recordNo",
+                "fxCategory",
+                "fxCode",
+                "fxType",
+                "fxAmount",
+                "fxDate"
+            )
+            .defaultSort("reportDate,desc", "recordNo,asc")
+            .build();
 
         Page<FxEnquiryDto> result = trxRepository.findEnquiry(pageable);
         return new PageResponse<>(result);
-    }
-
-    private Sort resolveEnquirySort(List<String> sortSpecs) {
-        if (sortSpecs == null || sortSpecs.isEmpty()) {
-            return Sort.by(
-                new Sort.Order(Sort.Direction.DESC, "reportDate"),
-                new Sort.Order(Sort.Direction.ASC, "recordNo")
-            );
-        }
-
-        List<Sort.Order> orders = new ArrayList<>();
-
-        for (String spec : sortSpecs) {
-            if (spec == null || spec.trim().isEmpty()) {
-                continue;
-            }
-
-            String[] parts = spec.split(",", 2);
-            String sortBy = resolveEnquirySortProperty(parts[0].trim());
-            String sortDir = parts.length > 1 ? parts[1].trim() : "asc";
-            Sort.Direction direction;
-
-            if ("asc".equalsIgnoreCase(sortDir)) {
-                direction = Sort.Direction.ASC;
-            } else if ("desc".equalsIgnoreCase(sortDir)) {
-                direction = Sort.Direction.DESC;
-            } else {
-                throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Unsupported sort direction: " + sortDir.toLowerCase(Locale.ROOT)
-                );
-            }
-
-            orders.add(new Sort.Order(direction, sortBy));
-        }
-
-        if (orders.isEmpty()) {
-            return Sort.by(
-                new Sort.Order(Sort.Direction.DESC, "reportDate"),
-                new Sort.Order(Sort.Direction.ASC, "recordNo")
-            );
-        }
-
-        return Sort.by(orders);
-    }
-
-    private String resolveEnquirySortProperty(String sortBy) {
-        String value = sortBy == null ? "reportDate" : sortBy.trim();
-
-        switch (value) {
-            case "reportDate":
-            case "recordNo":
-            case "fxCategory":
-            case "fxCode":
-            case "fxType":
-            case "fxAmount":
-            case "fxDate":
-                return value;
-            default:
-                throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Unsupported sort field: " + value.toLowerCase(Locale.ROOT)
-                );
-        }
     }
 
     public List<FxMasterDto> findAllMasters() {
