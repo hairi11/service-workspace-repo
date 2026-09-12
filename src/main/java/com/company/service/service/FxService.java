@@ -10,7 +10,6 @@ import javax.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -66,11 +65,13 @@ public class FxService {
 
     private Sort resolveEnquirySort(List<String> sortSpecs) {
         if (sortSpecs == null || sortSpecs.isEmpty()) {
-            return JpaSort.unsafe(Sort.Direction.DESC, "m.reportDate")
-                .and(JpaSort.unsafe(Sort.Direction.ASC, "t.recordNo"));
+            return Sort.by(
+                new Sort.Order(Sort.Direction.DESC, "reportDate"),
+                new Sort.Order(Sort.Direction.ASC, "recordNo")
+            );
         }
 
-        Sort result = Sort.unsorted();
+        List<Sort.Order> orders = new ArrayList<>();
 
         for (String spec : sortSpecs) {
             if (spec == null || spec.trim().isEmpty()) {
@@ -78,7 +79,7 @@ public class FxService {
             }
 
             String[] parts = spec.split(",", 2);
-            String sortBy = parts[0].trim();
+            String sortBy = resolveEnquirySortProperty(parts[0].trim());
             String sortDir = parts.length > 1 ? parts[1].trim() : "asc";
             Sort.Direction direction;
 
@@ -93,37 +94,31 @@ public class FxService {
                 );
             }
 
-            String sortExpression = resolveEnquirySortExpression(sortBy);
-            Sort next = JpaSort.unsafe(direction, sortExpression);
-            result = result.isUnsorted() ? next : result.and(next);
+            orders.add(new Sort.Order(direction, sortBy));
         }
 
-        if (result.isUnsorted()) {
-            return JpaSort.unsafe(Sort.Direction.DESC, "m.reportDate")
-                .and(JpaSort.unsafe(Sort.Direction.ASC, "t.recordNo"));
+        if (orders.isEmpty()) {
+            return Sort.by(
+                new Sort.Order(Sort.Direction.DESC, "reportDate"),
+                new Sort.Order(Sort.Direction.ASC, "recordNo")
+            );
         }
 
-        return result;
+        return Sort.by(orders);
     }
 
-    private String resolveEnquirySortExpression(String sortBy) {
+    private String resolveEnquirySortProperty(String sortBy) {
         String value = sortBy == null ? "reportDate" : sortBy.trim();
 
         switch (value) {
             case "reportDate":
-                return "m.reportDate";
             case "recordNo":
-                return "t.recordNo";
             case "fxCategory":
-                return "t.fxCategory";
             case "fxCode":
-                return "t.fxCode";
             case "fxType":
-                return "t.fxType";
             case "fxAmount":
-                return "t.fxAmount";
             case "fxDate":
-                return "t.fxDate";
+                return value;
             default:
                 throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
