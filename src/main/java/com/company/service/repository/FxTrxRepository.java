@@ -23,8 +23,7 @@ public interface FxTrxRepository extends JpaRepository<FxTrx, Long> {
         value = "select new com.company.service.api.dto.FxEnquiryDto(" +
             "m.reportDate, t.recordNo, t.fxCategory, t.fxCode, t.fxType, t.fxAmount, t.fxDate) " +
             "from FxTrx t, FxMaster m " +
-            "where m.id = t.masterId " +
-            "order by m.reportDate desc, t.recordNo asc",
+            "where m.id = t.masterId",
         countQuery = "select count(t) from FxTrx t, FxMaster m where m.id = t.masterId"
     )
     Page<FxEnquiryDto> findEnquiry(Pageable pageable);
