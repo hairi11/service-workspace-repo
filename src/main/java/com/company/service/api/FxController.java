@@ -33,9 +33,11 @@ public class FxController {
     @GetMapping("/fx/enquiry")
     public PageResponse<FxEnquiryDto> enquiry(
         @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "20") int size
+        @RequestParam(defaultValue = "20") int size,
+        @RequestParam(defaultValue = "reportDate") String sortBy,
+        @RequestParam(defaultValue = "desc") String sortDir
     ) {
-        return service.findEnquiryRecords(page, size);
+        return service.findEnquiryRecords(page, size, sortBy, sortDir);
     }
 
     @GetMapping("/fx-masters")
