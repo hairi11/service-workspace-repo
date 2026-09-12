@@ -13,6 +13,27 @@ public class FxEnquiryDto {
     private BigDecimal fxAmount;
     private LocalDate fxDate;
 
+    public FxEnquiryDto() {
+    }
+
+    public FxEnquiryDto(
+        LocalDate reportDate,
+        Integer recordNo,
+        String fxCategory,
+        String fxCode,
+        String fxType,
+        BigDecimal fxAmount,
+        LocalDate fxDate
+    ) {
+        this.reportDate = reportDate;
+        this.recordNo = recordNo;
+        this.fxCategory = fxCategory;
+        this.fxCode = fxCode;
+        this.fxType = fxType;
+        this.fxAmount = fxAmount;
+        this.fxDate = fxDate;
+    }
+
     public LocalDate getReportDate() { return reportDate; }
     public void setReportDate(LocalDate reportDate) { this.reportDate = reportDate; }
     public Integer getRecordNo() { return recordNo; }
