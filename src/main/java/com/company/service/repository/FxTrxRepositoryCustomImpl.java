@@ -39,6 +39,8 @@ public class FxTrxRepositoryCustomImpl implements FxTrxRepositoryCustom {
 
         query.select(cb.construct(
             FxEnquiryDto.class,
+            trx.get("id"),
+            trx.get("masterId"),
             master.get("reportDate"),
             trx.get("recordNo"),
             trx.get("fxCategory"),
