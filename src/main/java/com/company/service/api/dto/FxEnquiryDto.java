@@ -5,6 +5,8 @@ import java.time.LocalDate;
 
 public class FxEnquiryDto {
 
+    private Long id;
+    private Long masterId;
     private LocalDate reportDate;
     private Integer recordNo;
     private String fxCategory;
@@ -20,6 +22,8 @@ public class FxEnquiryDto {
     }
 
     public FxEnquiryDto(
+        Long id,
+        Long masterId,
         LocalDate reportDate,
         Integer recordNo,
         String fxCategory,
@@ -28,6 +32,8 @@ public class FxEnquiryDto {
         BigDecimal fxAmount,
         LocalDate fxDate
     ) {
+        this.id = id;
+        this.masterId = masterId;
         this.reportDate = reportDate;
         this.recordNo = recordNo;
         this.fxCategory = fxCategory;
@@ -37,6 +43,10 @@ public class FxEnquiryDto {
         this.fxDate = fxDate;
     }
 
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Long getMasterId() { return masterId; }
+    public void setMasterId(Long masterId) { this.masterId = masterId; }
     public LocalDate getReportDate() { return reportDate; }
     public void setReportDate(LocalDate reportDate) { this.reportDate = reportDate; }
     public Integer getRecordNo() { return recordNo; }
