@@ -140,7 +140,6 @@ public class FxService {
         validateReferenceFields(input);
         FxTrx trx = findTransactionEntityById(id);
         copyEditableFields(input, trx);
-        trx.setStatus(input.getStatus());
         return toTrxDto(trxRepository.save(trx));
     }
 
