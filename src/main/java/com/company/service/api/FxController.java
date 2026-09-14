@@ -28,6 +28,8 @@ import com.company.service.service.FxService;
 @RequestMapping("/api")
 public class FxController {
 
+    private static final String STATUS_DRAFT = "DRAFT";
+
     private final FxService service;
 
     public FxController(FxService service) {
@@ -62,7 +64,9 @@ public class FxController {
 
     @PostMapping("/fx-masters")
     @ResponseStatus(HttpStatus.CREATED)
-    public FxMasterDto createMaster(@RequestBody FxMasterDto input) {
+    public FxMasterDto createMaster() {
+        FxMasterDto input = new FxMasterDto();
+        input.setStatus(STATUS_DRAFT);
         return service.createMaster(input);
     }
 
