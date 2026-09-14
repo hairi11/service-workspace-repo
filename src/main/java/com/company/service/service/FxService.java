@@ -125,14 +125,14 @@ public class FxService {
     }
 
     public FxTrxDto createTransaction(Long masterId, FxTrxDto input) {
-        requireMaster(masterId);
+        FxMaster master = findMasterEntityById(masterId);
         validateReferenceFields(input);
 
         FxTrx trx = new FxTrx();
         trx.setMasterId(masterId);
         trx.setRecordNo(nextRecordNo(masterId));
         copyEditableFields(input, trx);
-        trx.setStatus(input.getStatus());
+        trx.setStatus(master.getStatus());
         return toTrxDto(trxRepository.save(trx));
     }
 
@@ -164,24 +164,26 @@ public class FxService {
         }
 
         FxMasterDto inputMaster = request.getMaster();
-        FxMaster master;
-
-        if (inputMaster.getId() == null) {
-            master = new FxMaster();
-        } else {
-            master = findMasterEntityById(inputMaster.getId());
-        }
+        boolean existingMaster = inputMaster.getId() != null;
+        FxMaster master = existingMaster
+            ? findMasterEntityById(inputMaster.getId())
+            : new FxMaster();
 
         master.setStatus(status);
         master = masterRepository.save(master);
-
-        List<FxTrxDto> savedTransactions = new ArrayList<>();
-        int nextRecordNo = nextRecordNo(master.getId());
 
         List<FxTrxDto> transactions = request.getTransactions();
         if (transactions == null) {
             transactions = new ArrayList<>();
         }
+
+        List<FxTrxDto> savedTransactions = new ArrayList<>();
+        List<Long> retainedIds = transactions.stream()
+            .map(FxTrxDto::getId)
+            .filter(id -> id != null)
+            .collect(Collectors.toList());
+
+        int recordNo = 1;
 
         for (FxTrxDto input : transactions) {
             validateReferenceFields(input);
@@ -190,7 +192,6 @@ public class FxService {
             if (input.getId() == null) {
                 trx = new FxTrx();
                 trx.setMasterId(master.getId());
-                trx.setRecordNo(nextRecordNo++);
             } else {
                 trx = findTransactionEntityById(input.getId());
 
@@ -202,9 +203,19 @@ public class FxService {
                 }
             }
 
+            trx.setRecordNo(recordNo++);
             copyEditableFields(input, trx);
             trx.setStatus(status);
             savedTransactions.add(toTrxDto(trxRepository.save(trx)));
+        }
+
+        if (existingMaster) {
+            List<FxTrx> existingTransactions = trxRepository.findByMasterIdOrderByRecordNoAsc(master.getId());
+            for (FxTrx existing : existingTransactions) {
+                if (!retainedIds.contains(existing.getId())) {
+                    trxRepository.deleteById(existing.getId());
+                }
+            }
         }
 
         return new FxSaveResponse(toMasterDto(master), savedTransactions);
