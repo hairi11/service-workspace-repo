@@ -89,6 +89,8 @@ public class FxController {
     @PostMapping("/fx-masters/{masterId}/transactions")
     @ResponseStatus(HttpStatus.CREATED)
     public FxTrxDto createTransaction(@PathVariable Long masterId, @RequestBody FxTrxDto input) {
+        FxMasterDto master = service.findMasterById(masterId);
+        input.setStatus(master.getStatus());
         return service.createTransaction(masterId, input);
     }
 
