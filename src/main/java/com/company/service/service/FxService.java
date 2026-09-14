@@ -177,6 +177,9 @@ public class FxService {
             transactions = new ArrayList<>();
         }
 
+        List<FxTrx> originalTransactions = existingMaster
+            ? trxRepository.findByMasterIdOrderByRecordNoAsc(master.getId())
+            : new ArrayList<>();
         List<FxTrxDto> savedTransactions = new ArrayList<>();
         List<Long> retainedIds = transactions.stream()
             .map(FxTrxDto::getId)
@@ -209,12 +212,9 @@ public class FxService {
             savedTransactions.add(toTrxDto(trxRepository.save(trx)));
         }
 
-        if (existingMaster) {
-            List<FxTrx> existingTransactions = trxRepository.findByMasterIdOrderByRecordNoAsc(master.getId());
-            for (FxTrx existing : existingTransactions) {
-                if (!retainedIds.contains(existing.getId())) {
-                    trxRepository.deleteById(existing.getId());
-                }
+        for (FxTrx original : originalTransactions) {
+            if (!retainedIds.contains(original.getId())) {
+                trxRepository.deleteById(original.getId());
             }
         }
 
