@@ -1,10 +1,12 @@
 package com.company.service.api;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,8 +23,10 @@ import com.company.service.api.dto.FxReferenceDto;
 import com.company.service.api.dto.FxSaveRequest;
 import com.company.service.api.dto.FxSaveResponse;
 import com.company.service.api.dto.FxTrxDto;
+import com.company.service.api.dto.FxValidationResponse;
 import com.company.service.api.dto.PageResponse;
 import com.company.service.service.FxService;
+import com.company.service.service.FxValidationService;
 
 @RestController
 @RequestMapping("/api")
@@ -31,9 +35,11 @@ public class FxController {
     private static final String STATUS_DRAFT = "DRAFT";
 
     private final FxService service;
+    private final FxValidationService validationService;
 
-    public FxController(FxService service) {
+    public FxController(FxService service, FxValidationService validationService) {
         this.service = service;
+        this.validationService = validationService;
     }
 
     @GetMapping("/fx/enquiry")
@@ -50,6 +56,15 @@ public class FxController {
     @GetMapping("/fx/references")
     public List<FxReferenceDto> findReferences(@RequestParam String type) {
         return service.findReferences(type);
+    }
+
+    @GetMapping("/fx/validate-date")
+    public FxValidationResponse validateDate(
+        @RequestParam
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate date
+    ) {
+        return validationService.validateDate(date);
     }
 
     @GetMapping("/fx-masters")
@@ -89,6 +104,7 @@ public class FxController {
     @PostMapping("/fx-masters/{masterId}/transactions")
     @ResponseStatus(HttpStatus.CREATED)
     public FxTrxDto createTransaction(@PathVariable Long masterId, @RequestBody FxTrxDto input) {
+        validationService.requireValidDate(input.getFxDate());
         FxMasterDto master = service.findMasterById(masterId);
         input.setStatus(master.getStatus());
         return service.createTransaction(masterId, input);
@@ -101,6 +117,7 @@ public class FxController {
 
     @PostMapping("/fx-transactions/{id}")
     public FxTrxDto updateTransaction(@PathVariable Long id, @RequestBody FxTrxDto input) {
+        validationService.requireValidDate(input.getFxDate());
         return service.updateTransaction(id, input);
     }
 
@@ -112,11 +129,17 @@ public class FxController {
 
     @PostMapping("/fx/save")
     public FxSaveResponse save(@RequestBody FxSaveRequest request) {
+        validationService.validateTransactions(
+            request == null ? null : request.getTransactions()
+        );
         return service.saveDraft(request);
     }
 
     @PostMapping("/fx/submit")
     public FxSaveResponse submit(@RequestBody FxSaveRequest request) {
+        validationService.validateTransactions(
+            request == null ? null : request.getTransactions()
+        );
         return service.submit(request);
     }
 }
