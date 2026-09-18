@@ -1,8 +1,9 @@
 package com.company.service.api.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 public class FxEnquiryDto {
 
@@ -16,8 +17,10 @@ public class FxEnquiryDto {
     private String fxCodeDescription;
     private String fxType;
     private String fxTypeDescription;
+
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private BigDecimal fxAmount;
+
     private LocalDate fxDate;
 
     public FxEnquiryDto() {
