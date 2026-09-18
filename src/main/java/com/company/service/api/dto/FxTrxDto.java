@@ -1,8 +1,9 @@
 package com.company.service.api.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 public class FxTrxDto {
 
@@ -18,11 +19,13 @@ public class FxTrxDto {
     private String fxParty;
     private String fxPrincipal;
     private String fxCurrency;
+
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private BigDecimal fxAmount;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private BigDecimal fxRate;
+
     private String fxDescription;
 
     public Long getId() { return id; }
