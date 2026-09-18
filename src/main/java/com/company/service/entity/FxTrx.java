@@ -51,7 +51,7 @@ public class FxTrx {
     @Column(name = "fx_currency", length = 20)
     private String fxCurrency;
 
-    @Column(name = "fx_amount", precision = 19, scale = 4)
+    @Column(name = "fx_amount", precision = 20, scale = 4)
     private BigDecimal fxAmount;
 
     @Column(name = "fx_rate", precision = 19, scale = 8)
